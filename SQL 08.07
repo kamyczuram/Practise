@@ -1,0 +1,11 @@
+Find wineries producing wines with aromas of plum, cherry, rose, or hazelnut (singular form only). Substring matches, like cherries should be excluded.
+
+SELECT winery DISTICNT FROM (
+select winery, description 
+from winemag_p1 
+WHERE description LIKE '%plum%'
+    OR description LIKE '%cherry%'
+    OR description LIKE '%rose%'
+    OR description LIKE '%hazelnut%')
+
+
