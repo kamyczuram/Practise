@@ -56,3 +56,28 @@ ON s.user_id_sender = a.user_id_sender
 AND s.user_id_receiver = a.user_id_receiver
 )
 GROUP BY date
+
+
+Identify returning active users by finding users who made a second purchase within 1 to 7 days after their first purchase. 
+Ignore same-day purchases. Output a list of these user_ids.
+
+
+
+WITH first_buy AS(
+SELECT user_id, MIN(created_at) AS first_buy
+FROM amazon_transactions 
+GROUP BY user_id),
+
+second_buy AS(
+SELECT user_id, MIN(created_at) AS second_buy
+FROM amazon_transactions 
+WHERE (user_id, created_at) NOT IN (
+SELECT * FROM first_buy)
+GROUP BY user_id
+)
+SELECT f.user_id, f.first_buy, s.second_buy, s.second_buy - f.first_buy AS diff
+FROM first_buy AS f 
+JOIN second_buy AS s
+ON f.user_id = s.user_id
+WHERE s.second_buy - f.first_buy < 8;
+
