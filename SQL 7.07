@@ -1,0 +1,74 @@
+Find the customers with the highest daily total order cost between 2019-02-01 and 2019-05-01. 
+If a customer had more than one order on a certain day, sum the order costs on a daily basis. 
+Output each customer's first name, total cost of their items, and the date.
+For simplicity, you can assume that every first name in the dataset is unique.
+
+WITH temp AS (
+  SELECT c.first_name AS name,
+    o.order_date AS date,
+    o.total_order_cost AS cost 
+  FROM customers AS c 
+  JOIN orders AS o ON c.id = o.cust_id),
+
+temp2 AS(
+  SELECT name, date, SUM(cost) AS sum_cost 
+  FROM temp 
+  WHERE date BETWEEN '2019-02-01' AND '2019-05-01' 
+  GROUP BY (name, date))
+
+SELECT name, date, sum_cost
+FROM temp2 WHERE (date, sum_cost) IN (
+    SELECT date, MAX(sum_cost) 
+    FROM temp2 
+    GROUP BY date
+);
+
+Alternatywnie 
+
+WITH temp AS (
+  SELECT 
+    c.first_name AS name, 
+    o.order_date::date AS date, 
+    o.total_order_cost AS cost
+  FROM customers AS c 
+  JOIN orders AS o ON c.id = o.cust_id
+),
+temp2 AS (
+  SELECT 
+    name, 
+    date, 
+    SUM(cost) AS sum_cost
+  FROM temp 
+  WHERE date BETWEEN '2019-02-01' AND '2019-05-01'
+  GROUP BY name, date
+),
+ranked AS (
+  SELECT *,
+         RANK() OVER (PARTITION BY date ORDER BY sum_cost DESC) AS rnk
+  FROM temp2
+)
+SELECT name, sum_cost, date
+FROM ranked
+WHERE rnk = 1;
+
+Calculate the net change in the number of products launched by companies in 2020 compared to 2019. Your output should include the company names and the net difference.
+(Net difference = Number of products launched in 2020 - The number launched in 2019.)
+
+WITH car_launches_counted AS (
+SELECT year, company_name, COUNT(product_name) AS no_products
+FROM car_launches 
+GROUP BY year, company_name),
+
+ y2019 AS (
+    SELECT * 
+    FROM car_launches_counted
+    WHERE year = 2019),
+    
+y2020 AS (
+    SELECT * 
+    FROM car_launches_counted
+    WHERE year = 2020)
+
+SELECT y2020.company_name AS company_name,
+y2020.no_products - y2019.no_products AS difference
+FROM y2020 JOIN y2019 ON y2020.company_name = y2019.company_name
