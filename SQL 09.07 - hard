@@ -1,0 +1,22 @@
+Find all the users who were active for 3 consecutive days or more.
+
+WITH perv_day AS(
+select 
+user_id,
+record_date, 
+LAG(record_date) OVER (PARTITION BY user_id ORDER BY record_date) as perv_day
+from sf_events),
+
+second_day AS(
+select 
+user_id,
+record_date, 
+perv_day,
+LAG(perv_day) OVER 
+(PARTITION BY user_id ORDER BY record_date) as second_day
+from perv_day
+)
+
+SELECT *, record_date - second_day AS diff 
+FROM second_day
+WHERE record_date - second_day = 2;
