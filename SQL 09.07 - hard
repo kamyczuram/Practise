@@ -87,4 +87,33 @@ ON r.actor_name = a.actor_name
 ORDER BY r.actor_name;
 
 
+You are given a table of tennis players and their matches that they could either win (W) or lose (L). Find the longest streak of wins.
+A streak is a set of consecutive won matches of one player. The streak ends once a player loses their next match. 
+Output the ID of the player or players and the length of the streak.
+
+
+WITH RECURSIVE player401 AS(
+select *,
+LEAD(match_date) OVER(PARTITION BY player_id ORDER BY match_date) AS next_match
+from players_results
+),
+
+streak AS(
+SELECT player_id, match_date, match_result, next_match,
+1 as streak
+FROM player401
+WHERE match_result = 'W'
+
+UNION ALL
+SELECT p.player_id, p.match_date, p.match_result, p.next_match,
+s.streak + 1 AS streak
+FROM player401 as p
+JOIN streak as s ON s.next_match = p.match_date
+WHERE p.match_result = 'W'
+)
+
+SELECT * FROM streak
+ORDER BY player_id, match_date;
+
+
 
