@@ -52,4 +52,39 @@ FROM ranked
 WHERE rnk = 1;
 
 
+You are given a dataset of actors and the films they have been involved in, including each film's release date and rating. 
+For each actor, calculate the difference between the rating of their most recent film and their average rating across all previous films 
+(the average rating excludes the most recent one).
+
+Return a list of actors along with their average lifetime rating, the rating of their most recent film, and the difference between the two ratings.
+If an actor has only one film, return 0 for the difference and their only film’s rating for both the average and latest rating fields.
+
+WITH ranked AS(
+select *, 
+ROW_NUMBER() OVER(PARTITION BY actor_name ORDER BY release_date DESC) AS r_num
+from actor_rating_shift
+ORDER BY actor_name),
+
+recent AS(
+SELECT *
+FROM ranked
+WHERE r_num = 1),
+
+average AS(
+SELECT actor_name, AVG(film_rating) AS avg_rating
+FROM ranked
+WHERE r_num > 1
+GROUP BY actor_name
+)
+
+SELECT r.actor_name, 
+r.film_rating AS latest_rating,
+COALESCE(a.avg_rating, r.film_rating) AS avg_rating,
+r.film_rating - COALESCE(a.avg_rating, r.film_rating) AS rating_difference
+FROM recent as r
+LEFT JOIN average as a
+ON r.actor_name = a.actor_name
+ORDER BY r.actor_name;
+
+
 
